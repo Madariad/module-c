@@ -126,9 +126,9 @@ function getConcertsSeating(req, res){
      GROUP_CONCAT(
          CASE 
              WHEN location_seats.id NOT IN (
-                 SELECT ticket_seat_id 
+                 SELECT tickets.id 
                  FROM tickets 
-                 WHERE tickets.show_id = 1
+                 WHERE tickets.booking_id = 1
              ) THEN location_seats.id 
          END
      ) AS unavailable 
@@ -145,8 +145,8 @@ function getConcertsSeating(req, res){
          unavailable: row.unavailable ? row.unavailable.split(',').map(id => parseInt(id)) : []
      }
  }));
-//  res.json(rows)
- console.log(JSON.stringify({ rows }));
+  res.json(rows)
+// console.log(JSON.stringify({ rows }));
 });
 
   // db.query(`SELECT * FROM concerts WHERE id = ?`, [concertId] ,(error, concerts) => {
