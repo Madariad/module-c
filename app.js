@@ -1,13 +1,14 @@
 const express = require('express')
 const colors = require('colors')
 const router = require('./Router/Route')
+const body_parser = require('body-parser') 
 const PORT = process.env.PORT ?? 4000
 const app = express()
 
 
-// app.use(express.json())
-
+app.use(express.json())
 app.use('/api/v1/concerts', router)
+app.use(body_parser)
 app.listen(PORT, (error) => {
     if (error) {
         

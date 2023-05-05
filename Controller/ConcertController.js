@@ -1,6 +1,8 @@
 const mysql = require('mysql')
 const colors = require('colors');
-// const { query } = require('express');
+const crypto = require('crypto');
+const { error } = require('console');
+const token = crypto.randomBytes(10).toString('hex')
 const db = mysql.createConnection(
     {
         host: '127.0.0.1',
@@ -31,6 +33,7 @@ function getConcertsWithLocationsAndShows(concerts) {
             reject(error)
             return
           }
+          
           shows.forEach(el => {
             delete  el.concert_id
           });
@@ -105,6 +108,7 @@ function getConcertsId(req, res) {
 
 function getConcertsSeating(req, res)
 {
+
  const {concertId, showId} = req.params
 
    db.query(`SELECT location_seat_rows.id AS rows_id, location_seat_rows.name AS rows_name, COUNT(location_seats.number) AS total, GROUP_CONCAT(CASE WHEN location_seats.ticket_id IS NOT NULL THEN location_seats.number END) AS unavailable FROM concerts LEFT JOIN shows  ON  concerts.id = shows.concert_id  LEFT JOIN location_seat_rows ON location_seat_rows.show_id = shows.id LEFT JOIN location_seats ON location_seats.location_seat_row_id = location_seat_rows.id LEFT JOIN tickets ON location_seats.ticket_id = tickets.id WHERE concerts.id = ${concertId} AND shows.id = ${showId} GROUP BY location_seat_rows.id`, (error, result) => {
@@ -127,15 +131,86 @@ function getConcertsSeating(req, res)
 
 }
 
+//  console.log(row, seat);
+  // db.query(`INSERT INTO reservations (token, expires_at) VALUES (${reservation_token ? reservation_token : token}, ${duration}) 
+  //           INSERT INTO location_seats (reservation_id) VALUES ()
+  // `)
+
+//  db.query(`UPDATE reservations SET token = ${reservation_token ? reservation_token : token }, expire_at = ${duration}`)
+
 
 // reservation
 
 function getReservation(req, res)
 {
-  //INSERT INTO reservations (token, expires_at) VALUES ("nbonore34onf", '2021-09-24 10:25:46');
-  res.send('success')
+  const {reservation_token, reservations, duration} = req.body
+  console.log(duration, reservation_token);
+  const  {row, seat} = reservations[0]
+
+  db.query(`INSERT INTO reservations (token, expires_at)
+  SELECT 'asasas', '2020-12-31 23:59:59'
+  FROM location_seats
+  WHERE location_seat_row_id = 1 AND number = 1`, (error, result) => {
+    console.log(result);
+  })
+  db.query(`UPDATE location_seats SET reservation_id = 1
+  WHERE location_seat_row_id = 1 AND number = 1`, (erorr, result) => {
+    console.log(result);
+  })
+  // db.query(`SELECT * FROM location_seats WHERE location_seat_row_id = ${row} AND number = ${seat}`, (error, result) => 
+  // {
+  //   if (error) throw error
+
+  //   const rows = result.map(row => 
+
+
+
+
+
+
+  //     (
+         
+  //     )
+  //   )
+
+  //   console.log(rows);
+  // })
+  // res.send('success')
 }
 module.exports = {getConcertsAll, getConcertsId, getConcertsSeating, getReservation}
+
+// INSERT INTO reservations (token, expires_at)
+// UPDATE location_seats SET reservatio_id = reservations.id 
+// SELECT 'asasas', '2020-12-31 23:59:59'
+// FROM location_seats
+// WHERE location_seat_row_id = 1 AND number = 1;
+
+
+
+
+// INSERT INTO reservations (token, expires_at)
+// SELECT 'asasas', '2020-12-31 23:59:59'
+// FROM location_seats
+// WHERE location_seat_row_id = 1 AND number = 1;
+// UPDATE location_seats SET reservation_id = reservations.id
+// WHERE location_seat_row_id = 1 AND number = 1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
