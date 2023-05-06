@@ -1,7 +1,7 @@
 const mysql = require('mysql')
 const colors = require('colors');
 const crypto = require('crypto');
-const { error } = require('console');
+const { error, log } = require('console');
 const token = crypto.randomBytes(10).toString('hex')
 const db = mysql.createConnection(
     {
@@ -75,7 +75,6 @@ function getConcertsAll(req, res) {
 
 //CONCERT ID
 
-
 function getConcertsId(req, res) {
   const id = req.params.id
 
@@ -131,51 +130,63 @@ function getConcertsSeating(req, res)
 
 }
 
-//  console.log(row, seat);
-  // db.query(`INSERT INTO reservations (token, expires_at) VALUES (${reservation_token ? reservation_token : token}, ${duration}) 
-  //           INSERT INTO location_seats (reservation_id) VALUES ()
-  // `)
-
-//  db.query(`UPDATE reservations SET token = ${reservation_token ? reservation_token : token }, expire_at = ${duration}`)
-
 
 // reservation
-
+// нужно исправить duration
 function getReservation(req, res)
 {
   const {reservation_token, reservations, duration} = req.body
-  console.log(duration, reservation_token);
-  const  {row, seat} = reservations[0]
+  const {concertId, showId} = req.params
+  
+  if(reservation_token){
+    db.query(`SELECT token AS tk FROM reservations`, (error, result) => 
+    {
+      if (error) {
+        console.error(error);
+      }
+      for (let index = 0; index < result.length; index++) {
+        const is_token = result[index].tk.trim() == reservation_token.trim();
 
-  db.query(`INSERT INTO reservations (token, expires_at)
-  SELECT 'asasas', '2020-12-31 23:59:59'
-  FROM location_seats
-  WHERE location_seat_row_id = 1 AND number = 1`, (error, result) => {
-    console.log(result);
+        if (is_token) {
+            //  res.setHeader('Content-Type', 'application/json');
+            res.status(403).json({ error: 'Invalid reservation token' });
+            return;
+                         
+        }
+      }
+    })
+    return
+  }
+
+  let reservedToken = reservation_token ? reservation_token : token  
+
+
+  db.query(`SELECT location_seat_rows.id AS rows_id, location_seat_rows.name AS rows_name, COUNT(location_seats.number) AS total, GROUP_CONCAT(CASE WHEN location_seats.ticket_id IS NOT NULL THEN location_seats.number END) AS unavailable FROM concerts LEFT JOIN shows  ON  concerts.id = shows.concert_id  LEFT JOIN location_seat_rows ON location_seat_rows.show_id = shows.id LEFT JOIN location_seats ON location_seats.location_seat_row_id = location_seat_rows.id LEFT JOIN tickets ON location_seats.ticket_id = tickets.id WHERE concerts.id = ${concertId} AND shows.id = ${showId} GROUP BY location_seat_rows.id`, (error, result) => {
+    if (result == '') {
+      res.status(404)
+      return res.json({error: "A concert or show with this ID does not exist"})
+    } else {
+      for (let index = 0; index < reservations.length; index++) {
+        const {row, seat} = reservations[index];
+    
+      db.query(`INSERT INTO reservations (token, expires_at) VALUES 
+        (${db.escape(reservedToken)}, '2020-12-31 23:59:58')`, (error, result) => {
+          console.log(result.insertId);
+          
+          db.query(`UPDATE location_seats SET reservation_id = ${result.insertId}
+           WHERE location_seat_row_id = ${row} AND number = ${seat}`, (erorr, result) => {
+           console.log(result);
+          })
+        }) 
+      }
+    
+    
+      res.json({reserved: true, reservation_token: reservedToken, reservation_until: duration})
+    }
   })
-  db.query(`UPDATE location_seats SET reservation_id = 1
-  WHERE location_seat_row_id = 1 AND number = 1`, (erorr, result) => {
-    console.log(result);
-  })
-  // db.query(`SELECT * FROM location_seats WHERE location_seat_row_id = ${row} AND number = ${seat}`, (error, result) => 
-  // {
-  //   if (error) throw error
-c
-  //   const rows = result.map(row => 
 
 
 
-
-
-
-  //     (
-         
-  //     )
-  //   )
-
-  //   console.log(rows);
-  // })
-  // res.send('success')
 }
 module.exports = {getConcertsAll, getConcertsId, getConcertsSeating, getReservation}
 
