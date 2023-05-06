@@ -160,7 +160,7 @@ function getReservation(req, res)
   // db.query(`SELECT * FROM location_seats WHERE location_seat_row_id = ${row} AND number = ${seat}`, (error, result) => 
   // {
   //   if (error) throw error
-
+c
   //   const rows = result.map(row => 
 
 
