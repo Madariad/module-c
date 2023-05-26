@@ -122,7 +122,8 @@ function getConcertsSeating(req, res)
         seats: {
           total: row.total,
           unavailable: row.unavailable,
-        }
+        } 
+          
       }));
   
       res.json({ rows });
@@ -131,6 +132,18 @@ function getConcertsSeating(req, res)
 
 }
 
+ 
+ 
+ 
+  
+ 
+ 
+
+
+
+
+   
+ 
 
 function getReservation(req, res)
 {
@@ -140,7 +153,26 @@ function getReservation(req, res)
   const timestamp = duration > 0 && duration <= 300 ? duration : null
   const reservedToken = reservation_token ? reservation_token : token
 
-  db.query(`SELECT location_seat_rows.id AS rows_id, location_seat_rows.name AS rows_name, location_seats.ticket_id AS ticket, COUNT(location_seats.number) AS total, GROUP_CONCAT(CASE WHEN location_seats.reservation_id IS NOT NULL THEN location_seats.number END) AS unavailable FROM concerts LEFT JOIN shows  ON  concerts.id = shows.concert_id  LEFT JOIN location_seat_rows ON location_seat_rows.show_id = shows.id LEFT JOIN location_seats ON location_seats.location_seat_row_id = location_seat_rows.id LEFT JOIN tickets ON location_seats.ticket_id = tickets.id WHERE concerts.id = ${concertId} AND shows.id = ${showId} GROUP BY location_seat_rows.id, location_seats.ticket_id`, (error, result) => {
+  db.query(`SELECT 
+  location_seat_rows.id AS rows_id, 
+  location_seat_rows.name AS rows_name, 
+  location_seats.ticket_id AS ticket, 
+  COUNT(location_seats.number) AS total, 
+  GROUP_CONCAT(
+    CASE 
+      WHEN location_seats.reservation_id IS NULL AND location_seats.ticket_id IS NULL 
+      THEN location_seats.number   
+  ) AS spare 
+
+
+  
+FROM concerts 
+LEFT JOIN shows ON concerts.id = shows.concert_id 
+LEFT JOIN location_seat_rows ON location_seat_rows.show_id = shows.id 
+LEFT JOIN location_seats ON location_seats.location_seat_row_id = location_seat_rows.id 
+LEFT JOIN tickets ON location_seats.ticket_id = tickets.id 
+WHERE concerts.id = ${concertId} AND shows.id = ${showId} 
+GROUP BY location_seat_rows.id, location_seats.ticket_id` , (error, result) => {
     if (error) throw error 
     if (result == '') {
       res.status(404)
@@ -150,8 +182,9 @@ function getReservation(req, res)
       const errors = {};
       for (let index = 0; index < reservations.length; index++) {
         const {row, seat} = reservations[index];
-        const isSeatValid = result.some(rowInfo => rowInfo.rows_id === row && !rowInfo.unavailable.includes(seat.toString()));
-        const isRowValid = result.some(rowInfo => rowInfo.rows_id === row);
+
+        // const isSeatValid = result.some(rowInfo => rowInfo.rows_id === row && !rowInfo.unavailable.includes(seat.toString()));
+        // const isRowValid = result.some(rowInfo => rowInfo.rows_id === row);
 
         if (!isRowValid) {
           errors[row] = `Row ${row} does not exist or does not belong to the given show`;
